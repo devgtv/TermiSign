@@ -28,8 +28,8 @@ class Renderer3D:
         self._setup_lighting()
 
         self.camera_x = 0
-        self.camera_y = 2.2
-        self.camera_z = 7.0
+        self.camera_y = 2.5
+        self.camera_z = 8.0
 
         self._current_char = ""
         self._current_desc = ""
@@ -85,7 +85,7 @@ class Renderer3D:
         glLoadIdentity()
         gluLookAt(
             self.camera_x, self.camera_y, self.camera_z,
-            0, 2.0, 0,
+            0, 2.5, 0,
             0, 1, 0,
         )
 
