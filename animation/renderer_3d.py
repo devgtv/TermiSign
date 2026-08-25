@@ -27,10 +27,9 @@ class Renderer3D:
         self._setup_gl()
         self._setup_lighting()
 
-        self.camera_angle_x = 15
-        self.camera_angle_y = 0
-        self.camera_distance = 8.0
-        self.auto_rotate = True
+        self.camera_x = 0
+        self.camera_y = 2.2
+        self.camera_z = 7.0
 
         self._current_char = ""
         self._current_desc = ""
@@ -48,21 +47,23 @@ class Renderer3D:
         glEnable(GL_COLOR_MATERIAL)
         glEnable(GL_NORMALIZE)
         glEnable(GL_MULTISAMPLE)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glShadeModel(GL_SMOOTH)
         glClearColor(0.08, 0.08, 0.12, 1.0)
         glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST)
         self._resize(self.width, self.height)
 
     def _setup_lighting(self):
-        light0_pos = [3.0, 8.0, 5.0, 1.0]
+        light0_pos = [2.0, 6.0, 4.0, 1.0]
         light0_diffuse = [0.9, 0.85, 0.8, 1.0]
         light0_specular = [1.0, 1.0, 1.0, 1.0]
         glLightfv(GL_LIGHT0, GL_POSITION, light0_pos)
         glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse)
         glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular)
 
-        light1_pos = [-4.0, 3.0, -3.0, 1.0]
-        light1_diffuse = [0.3, 0.35, 0.5, 1.0]
+        light1_pos = [-3.0, 2.0, -2.0, 1.0]
+        light1_diffuse = [0.25, 0.3, 0.45, 1.0]
         glLightfv(GL_LIGHT1, GL_POSITION, light1_pos)
         glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse)
 
@@ -82,10 +83,11 @@ class Renderer3D:
 
     def _update_camera(self):
         glLoadIdentity()
-        cam_x = self.camera_distance * math.sin(math.radians(self.camera_angle_y))
-        cam_y = self.camera_distance * math.sin(math.radians(self.camera_angle_x))
-        cam_z = self.camera_distance * math.cos(math.radians(self.camera_angle_y))
-        gluLookAt(cam_x, cam_y + 2, cam_z, 0, 2, 0, 0, 1, 0)
+        gluLookAt(
+            self.camera_x, self.camera_y, self.camera_z,
+            0, 2.0, 0,
+            0, 1, 0,
+        )
 
     def set_pose(self, pose_name: str, animate=True):
         if pose_name == self._target_pose:
@@ -123,8 +125,6 @@ class Renderer3D:
             elif event.type == KEYDOWN:
                 if event.key == K_ESCAPE or event.key == K_q:
                     return False
-                elif event.key == K_r:
-                    self.auto_rotate = not self.auto_rotate
             elif event.type == VIDEORESIZE:
                 self.width, self.height = event.size
                 self.screen = pygame.display.set_mode(
@@ -132,17 +132,14 @@ class Renderer3D:
                 )
                 self._resize(self.width, self.height)
 
-        if self.auto_rotate:
-            self.camera_angle_y += 0.3
-
         dt = 1.0 / 60.0
         self._interpolate_pose(dt)
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         self._update_camera()
 
-        glLightfv(GL_LIGHT0, GL_POSITION, [3.0, 8.0, 5.0, 1.0])
-        glLightfv(GL_LIGHT1, GL_POSITION, [-4.0, 3.0, -3.0, 1.0])
+        glLightfv(GL_LIGHT0, GL_POSITION, [2.0, 6.0, 4.0, 1.0])
+        glLightfv(GL_LIGHT1, GL_POSITION, [-3.0, 2.0, -2.0, 1.0])
 
         self._draw_grid()
         self.model.draw()
@@ -187,7 +184,7 @@ class Renderer3D:
                 size=18,
             )
 
-        controls = "[R] Rotacionar  [ESC/Q] Sair"
+        controls = "[ESC/Q] Sair"
         self._draw_text_surface(
             controls, 20, 15,
             color=(0.5, 0.5, 0.6),
@@ -206,7 +203,6 @@ class Renderer3D:
         text_surface = font.render(text, True, (int(color[0]*255), int(color[1]*255), int(color[2]*255)))
         text_data = pygame.image.tostring(text_surface, "RGBA", True)
         tw, th = text_surface.get_size()
-
         glWindowPos2d(x, y)
         glDrawPixels(tw, th, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
 
