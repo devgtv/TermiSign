@@ -110,7 +110,7 @@ class HumanoidModel:
         body_f.append(hf3)
 
         self._body_verts = np.concatenate(body_v)
-        self._body_faces = self._concat_faces(body_f)
+        self._body_faces = self._concat_faces(list(zip(body_v, body_f)))
 
         for side in [-1, 1]:
             hv_s, hf_s = self._sphere_mesh(0.05, 6, 8)
@@ -134,7 +134,9 @@ class HumanoidModel:
             fv[:, 0] += side * 0.2
 
             av_v = np.concatenate([hv_s, uv, kv, lv, fv])
-            av_f = self._concat_faces([hf_s, uf, kf, lf, ff])
+            av_f = self._concat_faces([
+                (hv_s, hf_s), (uv, uf), (kv, kf), (lv, lf), (fv, ff)
+            ])
 
             if side < 0:
                 self._left_leg_v = av_v
@@ -143,12 +145,12 @@ class HumanoidModel:
                 self._right_leg_v = av_v
                 self._right_leg_f = av_f
 
-    def _concat_faces(self, face_lists):
+    def _concat_faces(self, vert_face_pairs):
         result = []
         offset = 0
-        for faces in face_lists:
+        for verts, faces in vert_face_pairs:
             result.append(faces + offset)
-            offset += len(faces) if len(faces) > 0 else 0
+            offset += len(verts)
         return np.concatenate(result) if result else np.array([], dtype=np.int32)
 
     def _build_arm_vbo(self, side):
@@ -272,7 +274,7 @@ class HumanoidModel:
         parts_f.append(tbf)
 
         all_v = np.concatenate(parts_v)
-        all_f = self._concat_faces(parts_f)
+        all_f = self._concat_faces(list(zip(parts_v, parts_f)))
         return all_v, all_f
 
     def set_pose(self, pose_name: str):
